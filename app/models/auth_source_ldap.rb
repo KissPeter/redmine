@@ -18,6 +18,8 @@
 require 'net/ldap'
 require 'net/ldap/dn'
 require 'timeout'
+require 'digest'
+require 'base64'
 
 class AuthSourceLdap < AuthSource
   validates_presence_of :host, :port, :attr_login
@@ -63,7 +65,56 @@ class AuthSourceLdap < AuthSource
     "LDAP"
   end
 
-  # Returns true if this source can be searched for users
+  def allow_password_changes?
+    self.class.allow_password_changes?
+  end
+  # Does this auth source backend allow password changes?
+  def self.allow_password_changes?
+    true
+  end
+  
+  def encode_password(clear_password)
+    chars = ("a".."z").to_a + ("A".."Z").to_a + ("0".."9").to_a
+    salt = ''
+    10.times { |i| salt << chars[rand(chars.size-1)] }
+    logger.info "Encode as SSHA"
+    return "{SSHA}"+Base64.encode64(Digest::SHA1.digest(clear_password+salt)+salt).chomp!
+ end
+
+  # change password
+  def change_password(login,password,newPassword)
+    begin
+      attrs = get_user_dn(login, password)
+      if attrs
+        if self.account.blank? || self.account_password.blank?
+          ldap_con = initialize_ldap_con(attrs[:dn], password)
+        else
+          ldap_con = initialize_ldap_con(self.account, self.account_password)
+        end
+        return ldap_con.replace_attribute attrs[:dn], :userPassword, encode_password(newPassword)
+      end
+     rescue
+        return false
+     end
+    return false
+  end
+  
+  # Lost password
+  def lost_password(login,newPassword)
+    begin
+      attrs = get_user_dn_nopass(login)
+      if attrs
+        ldap_con = initialize_ldap_con(self.account, self.account_password)
+        return ldap_con.replace_attribute attrs[:dn], :userPassword, encode_password(newPassword)
+      end
+     rescue
+        return false
+     end
+    return false
+  end
+  
+  
+ # Returns true if this source can be searched for users
   def searchable?
     !account.to_s.include?("$login") && %w(login firstname lastname mail).all? {|a| send("attr_#{a}?")}
   end
@@ -173,6 +224,25 @@ class AuthSourceLdap < AuthSource
     else
       ldap_con = initialize_ldap_con(self.account, self.account_password)
     end
+    attrs = {}
+    search_filter = base_filter & Net::LDAP::Filter.eq(self.attr_login, login)
+    ldap_con.search( :base => self.base_dn,
+                     :filter => search_filter,
+                     :attributes=> search_attributes) do |entry|
+      if onthefly_register?
+        attrs = get_user_attributes_from_ldap_entry(entry)
+      else
+        attrs = {:dn => entry.dn}
+      end
+      logger.debug "DN found for #{login}: #{attrs[:dn]}" if logger && logger.debug?
+    end
+    attrs
+  end
+  
+  # Get the user's dn and any attributes for them, given their login, without password
+  def get_user_dn_nopass(login)
+    ldap_con = nil
+    ldap_con = initialize_ldap_con(self.account, self.account_password)
     attrs = {}
     search_filter = base_filter & Net::LDAP::Filter.eq(self.attr_login, login)
     ldap_con.search( :base => self.base_dn,

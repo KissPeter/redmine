@@ -97,14 +97,23 @@ class MyController < ApplicationController
       elsif params[:password] == params[:new_password]
         flash.now[:error] = l(:notice_new_password_must_be_different)
       else
-        @user.password, @user.password_confirmation = params[:new_password], params[:new_password_confirmation]
-        @user.must_change_passwd = false
-        if @user.save
-          # Reset the session creation time to not log out this session on next
-          # request due to ApplicationController#force_logout_if_password_changed
-          session[:ctime] = Time.now.utc.to_i
-          flash[:notice] = l(:notice_account_password_updated)
-          redirect_to my_account_path
+        if @user.isExternal?
+          if @user.changeExternalPassword(params[:password],params[:new_password], params[:new_password_confirmation])
+            @user.must_change_passwd = false
+            if @user.save
+			  session[:ctime] = Time.now.utc.to_i
+              flash[:notice] = l(:notice_account_password_updated)
+            end
+            redirect_to my_account_path
+          else
+            flash[:error] = l(:notice_external_password_error)
+          end
+        else
+          @user.password, @user.password_confirmation = params[:new_password], params[:new_password_confirmation]
+          if @user.save
+            flash[:notice] = l(:notice_account_password_updated)
+            redirect_to my_account_path
+          end
         end
       end
     end
