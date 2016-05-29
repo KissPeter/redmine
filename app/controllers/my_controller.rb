@@ -100,14 +100,24 @@ class MyController < ApplicationController
       elsif params[:password] == params[:new_password]
         flash.now[:error] = l(:notice_new_password_must_be_different)
       else
-        @user.password, @user.password_confirmation = params[:new_password], params[:new_password_confirmation]
-        @user.must_change_passwd = false
-        if @user.save
-          # The session token was destroyed by the password change, generate a new one
-          session[:tk] = @user.generate_session_token
-          Mailer.password_updated(@user)
-          flash[:notice] = l(:notice_account_password_updated)
-          redirect_to my_account_path
+        if @user.isExternal?
+          if @user.changeExternalPassword(params[:password],params[:new_password], params[:new_password_confirmation])
+            @user.must_change_passwd = false
+            if @user.save
+              # The session token was destroyed by the password change, generate a new one
+              session[:tk] = @user.generate_session_token
+              Mailer.password_updated(@user)
+              flash[:notice] = l(:notice_account_password_updated)
+              redirect_to my_account_path
+          else
+            flash[:error] = l(:notice_external_password_error)
+          end
+        else
+          @user.password, @user.password_confirmation = params[:new_password], params[:new_password_confirmation]
+          if @user.save
+            flash[:notice] = l(:notice_account_password_updated)
+            redirect_to my_account_path
+          end
         end
       end
     end

@@ -145,6 +145,7 @@ en:
   general_pdf_monospaced_fontname: freemono
   general_first_day_of_week: '7'
 
+  notice_external_password_error: Error changing external password. 
   notice_account_updated: Account was successfully updated.
   notice_account_invalid_credentials: Invalid user or password
   notice_account_password_updated: Password was successfully updated.
@@ -301,6 +302,8 @@ en:
   field_attr_lastname: Lastname attribute
   field_attr_mail: Email attribute
   field_onthefly: On-the-fly user creation
+  field_password_encryption: Encryption
+  field_enabled_passwd: Enabled password changing
   field_start_date: Start date
   field_done_ratio: "% Done"
   field_auth_source: Authentication mode
@@ -509,7 +512,6 @@ en:
   permission_export_wiki_pages: Export wiki pages
   permission_manage_subtasks: Manage subtasks
   permission_manage_related_issues: Manage related issues
-  permission_import_issues: Import issues
 
   project_module_issue_tracking: Issue tracking
   project_module_time_tracking: Time tracking
@@ -619,7 +621,6 @@ en:
   label_attribute: Attribute
   label_attribute_plural: Attributes
   label_no_data: No data to display
-  label_no_preview: No preview available
   label_change_status: Change status
   label_history: History
   label_attachment: File

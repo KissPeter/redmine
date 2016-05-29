@@ -166,6 +166,7 @@
   general_pdf_monospaced_fontname: freemono
   general_first_day_of_week: '1'
 
+  notice_external_password_error: Hiba a jelszó csere során. 
   notice_account_updated: A fiók adatai sikeresen frissítve.
   notice_account_invalid_credentials: Hibás felhasználói név, vagy jelszó
   notice_account_password_updated: A jelszó módosítása megtörtént.
@@ -266,6 +267,8 @@
   field_attr_lastname: Vezetéknév
   field_attr_mail: E-mail
   field_onthefly: On-the-fly felhasználó létrehozás
+  field_password_encryption: Titkosítás
+  field_enabled_passwd: Engedélyezett jelszócsere
   field_start_date: Kezdés dátuma
   field_done_ratio: Készültség (%)
   field_auth_source: Azonosítási mód
